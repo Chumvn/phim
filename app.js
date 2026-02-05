@@ -53,17 +53,16 @@ let hls = null;
 async function fetchAPI(endpoint) {
     const apiUrl = `${API_BASE}${endpoint}`;
 
-    // List of CORS proxies to try - ordered by reliability
+    // List of CORS proxies to try - optimized for GitHub Pages hosting
     const proxies = [
-        `https://api.allorigins.win/raw?url=${encodeURIComponent(apiUrl)}`,
         `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(apiUrl)}`,
-        `https://proxy.cors.sh/${apiUrl}`,
         `https://corsproxy.org/?${encodeURIComponent(apiUrl)}`,
-        `https://thingproxy.freeboard.io/fetch/${apiUrl}`
+        `https://thingproxy.freeboard.io/fetch/${apiUrl}`,
+        `https://proxy.cors.sh/${apiUrl}`
     ];
 
     let lastError = null;
-    
+
     for (const proxyUrl of proxies) {
         try {
             const response = await fetch(proxyUrl, {
@@ -71,7 +70,7 @@ async function fetchAPI(endpoint) {
                     'Accept': 'application/json',
                 }
             });
-            
+
             if (response.ok) {
                 const text = await response.text();
                 try {
