@@ -5,7 +5,6 @@
 
 // API Configuration
 const API_BASE = 'https://phim.nguonc.com/api';
-const CORS_PROXY = 'https://api.allorigins.win/raw?url=';
 
 // State Management
 const state = {
@@ -52,20 +51,31 @@ let hls = null;
 // ========================================
 
 async function fetchAPI(endpoint) {
-    try {
-        const url = `${CORS_PROXY}${encodeURIComponent(`${API_BASE}${endpoint}`)}`;
-        const response = await fetch(url);
+    const apiUrl = `${API_BASE}${endpoint}`;
 
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+    // List of CORS proxies to try
+    const proxies = [
+        `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(apiUrl)}`,
+        `https://corsproxy.io/?${encodeURIComponent(apiUrl)}`,
+        `https://api.allorigins.win/raw?url=${encodeURIComponent(apiUrl)}`
+    ];
+
+    for (const proxyUrl of proxies) {
+        try {
+            console.log('Fetching:', proxyUrl);
+            const response = await fetch(proxyUrl);
+            if (response.ok) {
+                const data = await response.json();
+                console.log('Response:', data);
+                return data;
+            }
+        } catch (e) {
+            console.warn(`Proxy failed (${proxyUrl}):`, e);
+            continue;
         }
-
-        const data = await response.json();
-        return data;
-    } catch (error) {
-        console.error('API Error:', error);
-        throw error;
     }
+
+    throw new Error('Failed to fetch from API after trying all proxies');
 }
 
 async function getLatestMovies(page = 1) {
