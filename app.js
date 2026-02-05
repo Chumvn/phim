@@ -55,9 +55,10 @@ async function fetchAPI(endpoint) {
 
     // List of CORS proxies to try - ordered by reliability
     const proxies = [
-        `https://thingproxy.freeboard.io/fetch/${apiUrl}`,
-        `https://cors.bridged.cc/${apiUrl}`,
-        `https://yacdn.org/proxy/${apiUrl}`
+        `https://corsproxy.io/?${encodeURIComponent(apiUrl)}`,
+        `https://api.allorigins.win/raw?url=${encodeURIComponent(apiUrl)}`,
+        `https://cors-anywhere.herokuapp.com/${apiUrl}`,
+        `https://thingproxy.freeboard.io/fetch/${apiUrl}`
     ];
 
     for (const proxyUrl of proxies) {
