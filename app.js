@@ -279,56 +279,68 @@ function playVideo(movieName, episodeName, embedUrl, m3u8Url) {
 
     const playerWrapper = document.querySelector('.player-wrapper');
 
+    // Normalize URLs - treat empty strings as null
+    const embed = embedUrl && embedUrl.trim() !== '' ? embedUrl.trim() : null;
+    const m3u8 = m3u8Url && m3u8Url.trim() !== '' ? m3u8Url.trim() : null;
+
+    console.log('🎬 Play video:', { embed, m3u8 });
+
     // PRIORITY: Use embed URL first (more reliable than m3u8 links)
-    if (embedUrl) {
-        console.log('▶ Sử dụng embed player:', embedUrl);
-        useEmbed(playerWrapper, embedUrl);
-    } else if (m3u8Url) {
+    if (embed) {
+        console.log('▶ Sử dụng embed player');
+        useEmbed(playerWrapper, embed);
+    } else if (m3u8) {
         // Fallback to M3U8 if no embed available
-        console.log('▶ Thử HLS stream:', m3u8Url);
-        playerWrapper.innerHTML = '<video id="videoPlayer" controls playsinline></video>';
-        const video = document.getElementById('videoPlayer');
-
-        if (Hls.isSupported()) {
-            hls = new Hls({
-                maxBufferLength: 30,
-                maxMaxBufferLength: 60,
-                manifestLoadingTimeOut: 10000, // 10 giây timeout
-                manifestLoadingMaxRetry: 2
-            });
-
-            hls.loadSource(m3u8Url);
-            hls.attachMedia(video);
-
-            hls.on(Hls.Events.MANIFEST_PARSED, () => {
-                console.log('✓ HLS stream loaded');
-                video.play().catch(e => console.log('Autoplay prevented:', e));
-            });
-
-            hls.on(Hls.Events.ERROR, (event, data) => {
-                if (data.fatal) {
-                    console.error('✗ HLS Fatal Error:', data.type, data.details);
-                    showVideoError(playerWrapper, 'Không thể phát video. Nguồn phát có thể đã hết hạn.');
-                }
-            });
-        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
-            // Native HLS support (Safari)
-            video.src = m3u8Url;
-            video.addEventListener('loadedmetadata', () => {
-                video.play().catch(e => console.log('Autoplay prevented:', e));
-            });
-            video.addEventListener('error', () => {
-                showVideoError(playerWrapper, 'Không thể phát video trên trình duyệt này.');
-            });
-        } else {
-            showVideoError(playerWrapper, 'Trình duyệt không hỗ trợ định dạng video này.');
-        }
+        console.log('▶ Thử HLS stream');
+        playHLS(playerWrapper, m3u8);
     } else {
+        console.log('✗ Không có nguồn phát');
         showVideoError(playerWrapper, 'Không tìm thấy nguồn phát.');
     }
 
     elements.playerModal.classList.add('active');
     document.body.style.overflow = 'hidden';
+}
+
+function playHLS(playerWrapper, m3u8Url) {
+    playerWrapper.innerHTML = '<video id="videoPlayer" controls playsinline></video>';
+    const video = document.getElementById('videoPlayer');
+
+    if (Hls.isSupported()) {
+        hls = new Hls({
+            maxBufferLength: 30,
+            maxMaxBufferLength: 60,
+            manifestLoadingTimeOut: 8000,
+            manifestLoadingMaxRetry: 1
+        });
+
+        hls.loadSource(m3u8Url);
+        hls.attachMedia(video);
+
+        hls.on(Hls.Events.MANIFEST_PARSED, () => {
+            console.log('✓ HLS stream loaded');
+            video.play().catch(e => console.log('Autoplay prevented:', e));
+        });
+
+        hls.on(Hls.Events.ERROR, (event, data) => {
+            if (data.fatal) {
+                console.error('✗ HLS Error:', data.details);
+                hls.destroy();
+                hls = null;
+                showVideoError(playerWrapper, 'Nguồn phát không khả dụng hoặc đã hết hạn.');
+            }
+        });
+    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+        video.src = m3u8Url;
+        video.addEventListener('loadedmetadata', () => {
+            video.play().catch(e => console.log('Autoplay prevented:', e));
+        });
+        video.addEventListener('error', () => {
+            showVideoError(playerWrapper, 'Không thể phát video.');
+        });
+    } else {
+        showVideoError(playerWrapper, 'Trình duyệt không hỗ trợ.');
+    }
 }
 
 function showVideoError(container, message) {
