@@ -53,29 +53,30 @@ let hls = null;
 async function fetchAPI(endpoint) {
     const apiUrl = `${API_BASE}${endpoint}`;
 
-    // List of CORS proxies to try
+    // List of CORS proxies to try - ordered by reliability
     const proxies = [
-        `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(apiUrl)}`,
-        `https://corsproxy.io/?${encodeURIComponent(apiUrl)}`,
-        `https://api.allorigins.win/raw?url=${encodeURIComponent(apiUrl)}`
+        `https://thingproxy.freeboard.io/fetch/${apiUrl}`,
+        `https://cors.bridged.cc/${apiUrl}`,
+        `https://yacdn.org/proxy/${apiUrl}`
     ];
 
     for (const proxyUrl of proxies) {
         try {
-            console.log('Fetching:', proxyUrl);
             const response = await fetch(proxyUrl);
             if (response.ok) {
-                const data = await response.json();
-                console.log('Response:', data);
-                return data;
+                const text = await response.text();
+                try {
+                    return JSON.parse(text);
+                } catch {
+                    continue;
+                }
             }
         } catch (e) {
-            console.warn(`Proxy failed (${proxyUrl}):`, e);
             continue;
         }
     }
 
-    throw new Error('Failed to fetch from API after trying all proxies');
+    throw new Error('Failed to fetch from API');
 }
 
 async function getLatestMovies(page = 1) {
