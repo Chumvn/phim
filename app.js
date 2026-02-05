@@ -534,6 +534,8 @@ function initEventListeners() {
     elements.navBtns.forEach(btn => {
         btn.addEventListener('click', () => {
             const category = btn.dataset.category;
+            updateNavBtns(category);
+            resetAndLoad(category);
         });
     });
 

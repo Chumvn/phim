@@ -25,6 +25,7 @@ Webapp xem phim online với giao diện Neumorphism đẹp mắt, hỗ trợ Da
 
 - HTML5 / CSS3 / JavaScript
 - HLS.js (Video streaming)
+- API: phim.nguonc.com
 
 ## Tác giả
 
@@ -33,4 +34,3 @@ Webapp xem phim online với giao diện Neumorphism đẹp mắt, hỗ trợ Da
 ## License
 
 MIT
-
