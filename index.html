@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CHUM Movies - Xem Phim Online</title>
+    <meta name="description" content="Xem phim online miễn phí với chất lượng cao. Phim mới cập nhật hàng ngày.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+</head>
+
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <svg class="logo-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect>
+                    <line x1="7" y1="2" x2="7" y2="22"></line>
+                    <line x1="17" y1="2" x2="17" y2="22"></line>
+                    <line x1="2" y1="12" x2="22" y2="12"></line>
+                    <line x1="2" y1="7" x2="7" y2="7"></line>
+                    <line x1="2" y1="17" x2="7" y2="17"></line>
+                    <line x1="17" y1="17" x2="22" y2="17"></line>
+                    <line x1="17" y1="7" x2="22" y2="7"></line>
+                </svg>
+                <span class="logo-text">CHUM Movies</span>
+            </div>
+
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="Tìm kiếm phim..." autocomplete="off">
+                <button id="searchBtn" class="search-btn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="header-actions">
+                <a href="https://github.com/chum" target="_blank" class="github-link" title="GitHub">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                        <path
+                            d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
+                    </svg>
+                </a>
+                <button id="themeToggle" class="theme-toggle" title="Đổi theme">
+                    <svg class="sun-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                    <svg class="moon-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Navigation -->
+    <nav class="nav">
+        <div class="nav-content">
+            <button class="nav-btn active" data-category="phim-moi-cap-nhat">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                </svg>
+                Mới nhất
+            </button>
+            <button class="nav-btn" data-category="phim-le">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="2" y="2" width="20" height="20" rx="2.18" ry="2.18"></rect>
+                    <line x1="7" y1="2" x2="7" y2="22"></line>
+                    <line x1="17" y1="2" x2="17" y2="22"></line>
+                </svg>
+                Phim lẻ
+            </button>
+            <button class="nav-btn" data-category="phim-bo">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                </svg>
+                Phim bộ
+            </button>
+            <button class="nav-btn" data-category="hoat-hinh">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <path
+                        d="M8.56 2.75c4.37 6.03 6.02 9.42 8.03 17.72m2.54-15.38c-3.72 4.35-8.94 5.66-16.88 5.85m19.5 1.9c-3.5-.93-6.63-.82-8.94 0-2.58.92-5.01 2.86-7.44 6.32">
+                    </path>
+                </svg>
+                Hoạt hình
+            </button>
+        </div>
+
+        <!-- Filter dropdowns -->
+        <div class="filter-row">
+            <select id="genreFilter" class="filter-select">
+                <option value="">Thể loại</option>
+                <option value="hanh-dong">Hành động</option>
+                <option value="phieu-luu">Phiêu lưu</option>
+                <option value="hoat-hinh">Hoạt hình</option>
+                <option value="phim-hai">Hài</option>
+                <option value="hinh-su">Hình sự</option>
+                <option value="tai-lieu">Tài liệu</option>
+                <option value="chinh-kich">Chính kịch</option>
+                <option value="gia-dinh">Gia đình</option>
+                <option value="gia-tuong">Giả tưởng</option>
+                <option value="lich-su">Lịch sử</option>
+                <option value="kinh-di">Kinh dị</option>
+                <option value="bi-an">Bí ẩn</option>
+                <option value="lang-man">Lãng mạn</option>
+                <option value="khoa-hoc-vien-tuong">Khoa học viễn tưởng</option>
+                <option value="gay-can">Gây cấn</option>
+                <option value="chien-tranh">Chiến tranh</option>
+                <option value="tam-ly">Tâm lý</option>
+                <option value="tinh-cam">Tình cảm</option>
+                <option value="co-trang">Cổ trang</option>
+            </select>
+
+            <select id="countryFilter" class="filter-select">
+                <option value="">Quốc gia</option>
+                <option value="au-my">Âu Mỹ</option>
+                <option value="han-quoc">Hàn Quốc</option>
+                <option value="trung-quoc">Trung Quốc</option>
+                <option value="nhat-ban">Nhật Bản</option>
+                <option value="thai-lan">Thái Lan</option>
+                <option value="viet-nam">Việt Nam</option>
+                <option value="hong-kong">Hồng Kông</option>
+                <option value="dai-loan">Đài Loan</option>
+                <option value="an-do">Ấn Độ</option>
+                <option value="anh">Anh</option>
+                <option value="phap">Pháp</option>
+            </select>
+
+            <select id="yearFilter" class="filter-select">
+                <option value="">Năm</option>
+                <option value="2026">2026</option>
+                <option value="2025">2025</option>
+                <option value="2024">2024</option>
+                <option value="2023">2023</option>
+                <option value="2022">2022</option>
+                <option value="2021">2021</option>
+                <option value="2020">2020</option>
+                <option value="2019">2019</option>
+                <option value="2018">2018</option>
+            </select>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main">
+        <div class="section-header">
+            <h2 id="sectionTitle">Phim mới cập nhật</h2>
+            <button id="backBtn" class="back-btn hidden">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="19" y1="12" x2="5" y2="12"></line>
+                    <polyline points="12 19 5 12 12 5"></polyline>
+                </svg>
+                Quay lại
+            </button>
+        </div>
+
+        <!-- Movie Grid -->
+        <div id="movieGrid" class="movie-grid"></div>
+
+        <!-- Loading Spinner -->
+        <div id="loading" class="loading hidden">
+            <div class="spinner"></div>
+            <span>Đang tải...</span>
+        </div>
+
+        <!-- Load More Button -->
+        <button id="loadMoreBtn" class="load-more-btn hidden">
+            Xem thêm
+        </button>
+
+        <!-- Movie Detail -->
+        <div id="movieDetail" class="movie-detail hidden"></div>
+    </main>
+
+    <!-- Video Player Modal -->
+    <div id="playerModal" class="player-modal hidden">
+        <div class="player-container">
+            <div class="player-header">
+                <h3 id="playerTitle">Đang phát</h3>
+                <button id="closePlayer" class="close-player-btn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <div class="player-wrapper">
+                <video id="videoPlayer" controls playsinline></video>
+            </div>
+            <div id="episodeList" class="episode-list"></div>
+            <div id="serverList" class="server-list"></div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>Designed & built by <strong>CHUM</strong></p>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+
+</html>
