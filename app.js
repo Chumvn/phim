@@ -279,29 +279,36 @@ function playVideo(movieName, episodeName, embedUrl, m3u8Url) {
 
     const playerWrapper = document.querySelector('.player-wrapper');
 
-    // Try M3U8 first if available
-    if (m3u8Url) {
-        // Make sure we have the video element
+    // PRIORITY: Use embed URL first (more reliable than m3u8 links)
+    if (embedUrl) {
+        console.log('▶ Sử dụng embed player:', embedUrl);
+        useEmbed(playerWrapper, embedUrl);
+    } else if (m3u8Url) {
+        // Fallback to M3U8 if no embed available
+        console.log('▶ Thử HLS stream:', m3u8Url);
         playerWrapper.innerHTML = '<video id="videoPlayer" controls playsinline></video>';
         const video = document.getElementById('videoPlayer');
 
         if (Hls.isSupported()) {
             hls = new Hls({
                 maxBufferLength: 30,
-                maxMaxBufferLength: 60
+                maxMaxBufferLength: 60,
+                manifestLoadingTimeOut: 10000, // 10 giây timeout
+                manifestLoadingMaxRetry: 2
             });
+
             hls.loadSource(m3u8Url);
             hls.attachMedia(video);
+
             hls.on(Hls.Events.MANIFEST_PARSED, () => {
+                console.log('✓ HLS stream loaded');
                 video.play().catch(e => console.log('Autoplay prevented:', e));
             });
+
             hls.on(Hls.Events.ERROR, (event, data) => {
                 if (data.fatal) {
-                    console.error('HLS Fatal Error:', data);
-                    // Fallback to embed
-                    if (embedUrl) {
-                        useEmbed(playerWrapper, embedUrl);
-                    }
+                    console.error('✗ HLS Fatal Error:', data.type, data.details);
+                    showVideoError(playerWrapper, 'Không thể phát video. Nguồn phát có thể đã hết hạn.');
                 }
             });
         } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
@@ -310,21 +317,32 @@ function playVideo(movieName, episodeName, embedUrl, m3u8Url) {
             video.addEventListener('loadedmetadata', () => {
                 video.play().catch(e => console.log('Autoplay prevented:', e));
             });
-        } else if (embedUrl) {
-            useEmbed(playerWrapper, embedUrl);
+            video.addEventListener('error', () => {
+                showVideoError(playerWrapper, 'Không thể phát video trên trình duyệt này.');
+            });
+        } else {
+            showVideoError(playerWrapper, 'Trình duyệt không hỗ trợ định dạng video này.');
         }
-    } else if (embedUrl) {
-        useEmbed(playerWrapper, embedUrl);
     } else {
-        playerWrapper.innerHTML = `
-            <div style="display:flex;align-items:center;justify-content:center;height:100%;color:#fff;">
-                <p>Không tìm thấy nguồn phát</p>
-            </div>
-        `;
+        showVideoError(playerWrapper, 'Không tìm thấy nguồn phát.');
     }
 
     elements.playerModal.classList.add('active');
     document.body.style.overflow = 'hidden';
+}
+
+function showVideoError(container, message) {
+    container.innerHTML = `
+        <div class="video-error">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:48px;height:48px;margin-bottom:16px;opacity:0.5">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <p style="font-size:16px;margin:0;opacity:0.9">${message}</p>
+            <p style="font-size:12px;margin-top:8px;opacity:0.5">Thử chọn tập khác hoặc server khác</p>
+        </div>
+    `;
 }
 
 function useEmbed(container, embedUrl) {
