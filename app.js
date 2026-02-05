@@ -358,15 +358,61 @@ function showVideoError(container, message) {
 }
 
 function useEmbed(container, embedUrl) {
+    // Show loading first
     container.innerHTML = `
-        <iframe 
-            src="${embedUrl}" 
-            frameborder="0" 
-            allowfullscreen 
-            allow="autoplay; encrypted-media; picture-in-picture"
-            style="position:absolute;top:0;left:0;width:100%;height:100%;">
-        </iframe>
+        <div class="video-loading" style="position:absolute;top:0;left:0;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#000;color:#fff;">
+            <div class="spinner" style="width:40px;height:40px;border:3px solid #333;border-top-color:#818cf8;border-radius:50%;animation:spin 0.8s linear infinite;"></div>
+            <p style="margin-top:16px;opacity:0.7;font-size:14px;">Đang tải video...</p>
+        </div>
     `;
+
+    // Store embed URL for external link
+    window.currentEmbedUrl = embedUrl;
+
+    // Show external link button
+    const serverList = document.getElementById('serverList');
+    if (serverList) {
+        serverList.innerHTML = `
+            <div style="text-align:center;padding:10px;">
+                <a href="${embedUrl}" target="_blank" rel="noopener" 
+                   style="display:inline-flex;align-items:center;gap:8px;padding:12px 24px;background:linear-gradient(135deg,#818cf8 0%,#c084fc 100%);color:#fff;text-decoration:none;border-radius:12px;font-weight:600;font-size:14px;">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                        <polyline points="15 3 21 3 21 9"></polyline>
+                        <line x1="10" y1="14" x2="21" y2="3"></line>
+                    </svg>
+                    Mở video trong tab mới
+                </a>
+                <p style="margin-top:8px;font-size:12px;opacity:0.6;">Nếu video không phát, hãy click nút trên</p>
+            </div>
+        `;
+    }
+
+    // Create iframe after a small delay to show loading
+    setTimeout(() => {
+        container.innerHTML = `
+            <iframe 
+                id="videoFrame"
+                src="${embedUrl}" 
+                frameborder="0" 
+                scrolling="no"
+                allowfullscreen="true"
+                webkitallowfullscreen="true"
+                mozallowfullscreen="true"
+                allow="autoplay; fullscreen; encrypted-media; picture-in-picture; accelerometer; gyroscope"
+                referrerpolicy="origin"
+                style="position:absolute;top:0;left:0;width:100%;height:100%;border:none;">
+            </iframe>
+        `;
+
+        const iframe = document.getElementById('videoFrame');
+        if (iframe) {
+            iframe.onerror = () => {
+                console.error('✗ Iframe load error');
+                showVideoError(container, 'Không thể tải trình phát video.');
+            };
+        }
+    }, 300);
 }
 
 function closeVideoPlayer() {
