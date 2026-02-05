@@ -153,7 +153,23 @@ function renderMovies(movies, append = false) {
 
 function renderMovieDetail(movie) {
     const posterUrl = movie.thumb_url || movie.poster_url || '';
-    const categories = movie.category || [];
+
+    // Handle category - can be array or object with keys "1", "2", etc.
+    let categoryTags = [];
+    if (movie.category) {
+        if (Array.isArray(movie.category)) {
+            categoryTags = movie.category.map(cat => cat.name);
+        } else if (typeof movie.category === 'object') {
+            // API returns object like {"1": {group: {}, list: [{name: "..."}]}, ...}
+            Object.values(movie.category).forEach(catGroup => {
+                if (catGroup.list && Array.isArray(catGroup.list)) {
+                    catGroup.list.forEach(item => {
+                        if (item.name) categoryTags.push(item.name);
+                    });
+                }
+            });
+        }
+    }
 
     let episodesHtml = '';
     if (movie.episodes && movie.episodes.length > 0) {
@@ -191,17 +207,16 @@ function renderMovieDetail(movie) {
                     ${movie.quality ? `<span class="movie-badge quality">${movie.quality}</span>` : ''}
                     ${movie.current_episode ? `<span class="movie-badge episode">${movie.current_episode}</span>` : ''}
                     ${movie.language ? `<span class="movie-badge">${movie.language}</span>` : ''}
-                    ${movie.year ? `<span class="movie-badge">${movie.year}</span>` : ''}
                     ${movie.time ? `<span class="movie-badge">${movie.time}</span>` : ''}
                 </div>
                 <p class="detail-description">${movie.description || 'Chưa có mô tả'}</p>
             </div>
         </div>
-        ${categories.length > 0 ? `
+        ${categoryTags.length > 0 ? `
             <div class="detail-section">
                 <h3>Thể loại</h3>
                 <div class="detail-meta">
-                    ${categories.map(cat => `<span class="movie-badge">${cat.name}</span>`).join('')}
+                    ${categoryTags.map(name => `<span class="movie-badge">${name}</span>`).join('')}
                 </div>
             </div>
         ` : ''}
@@ -391,7 +406,8 @@ async function showMovieDetail(slug) {
 
     try {
         const response = await getMovieDetail(slug);
-        const movie = response.movie || response.data?.item || response;
+        // API returns movie data directly or nested under 'movie' key
+        const movie = response.movie || response;
         state.currentMovie = movie;
 
         elements.sectionTitle.textContent = movie.name;
