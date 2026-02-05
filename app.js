@@ -55,28 +55,47 @@ async function fetchAPI(endpoint) {
 
     // List of CORS proxies to try - ordered by reliability
     const proxies = [
-        `https://corsproxy.io/?${encodeURIComponent(apiUrl)}`,
         `https://api.allorigins.win/raw?url=${encodeURIComponent(apiUrl)}`,
-        `https://cors-anywhere.herokuapp.com/${apiUrl}`,
+        `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(apiUrl)}`,
+        `https://proxy.cors.sh/${apiUrl}`,
+        `https://corsproxy.org/?${encodeURIComponent(apiUrl)}`,
         `https://thingproxy.freeboard.io/fetch/${apiUrl}`
     ];
 
+    let lastError = null;
+    
     for (const proxyUrl of proxies) {
         try {
-            const response = await fetch(proxyUrl);
+            const response = await fetch(proxyUrl, {
+                headers: {
+                    'Accept': 'application/json',
+                }
+            });
+            
             if (response.ok) {
                 const text = await response.text();
                 try {
-                    return JSON.parse(text);
+                    const data = JSON.parse(text);
+                    // Validate we got actual data
+                    if (data && (data.items || data.movie || data.data)) {
+                        console.log('✓ Proxy hoạt động:', proxyUrl.split('?')[0]);
+                        return data;
+                    }
                 } catch {
                     continue;
                 }
+            } else if (response.status === 403 || response.status === 429) {
+                // Proxy bị chặn hoặc rate limited, thử proxy tiếp theo
+                console.log('✗ Proxy bị chặn:', proxyUrl.split('?')[0]);
+                continue;
             }
         } catch (e) {
+            lastError = e;
             continue;
         }
     }
 
+    console.error('Tất cả proxy đều thất bại:', lastError);
     throw new Error('Failed to fetch from API');
 }
 
