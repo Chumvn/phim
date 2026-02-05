@@ -284,6 +284,9 @@ function playVideo(movieName, episodeName, embedUrl, m3u8Url) {
     // PRIORITY: Open embed URL in new tab (iframe embedding is blocked by most servers)
     if (embed) {
         console.log('▶ Mở embed trong tab mới');
+        // Ensure page is scrollable
+        document.body.style.overflow = '';
+        elements.playerModal.classList.remove('active');
         window.open(embed, '_blank', 'noopener,noreferrer');
         return;
     }
