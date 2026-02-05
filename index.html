@@ -42,6 +42,19 @@
             </div>
 
             <div class="header-actions">
+                <button id="favoritesBtn" class="header-btn" title="Yêu thích">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path
+                            d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z">
+                        </path>
+                    </svg>
+                </button>
+                <button id="historyBtn" class="header-btn" title="Lịch sử xem">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                </button>
                 <a href="https://github.com/Chumvn/phim" target="_blank" class="github-link" title="GitHub">
                     <svg viewBox="0 0 24 24" fill="currentColor">
                         <path
@@ -67,6 +80,22 @@
             </div>
         </div>
     </header>
+
+    <!-- Hero Slider -->
+    <section class="hero-slider" id="heroSlider">
+        <div class="hero-slides" id="heroSlides"></div>
+        <button class="hero-arrow hero-prev" id="heroPrev">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+        </button>
+        <button class="hero-arrow hero-next" id="heroNext">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+        </button>
+        <div class="hero-dots" id="heroDots"></div>
+    </section>
 
     <!-- Navigation -->
     <nav class="nav">
