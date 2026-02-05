@@ -269,6 +269,12 @@ function renderMovieDetail(movie) {
 // ========================================
 
 function playVideo(movieName, episodeName, embedUrl, m3u8Url) {
+    // Cleanup previous HLS instance first
+    if (hls) {
+        hls.destroy();
+        hls = null;
+    }
+
     // Normalize URLs - treat empty strings as null
     const embed = embedUrl && embedUrl.trim() !== '' ? embedUrl.trim() : null;
     const m3u8 = m3u8Url && m3u8Url.trim() !== '' ? m3u8Url.trim() : null;
@@ -279,29 +285,6 @@ function playVideo(movieName, episodeName, embedUrl, m3u8Url) {
     if (embed) {
         console.log('▶ Mở embed trong tab mới');
         window.open(embed, '_blank', 'noopener,noreferrer');
-
-        // Show notification in the modal
-        elements.playerTitle.textContent = `${movieName} - ${episodeName}`;
-        const playerWrapper = document.querySelector('.player-wrapper');
-        playerWrapper.innerHTML = `
-            <div class="video-opened" style="position:absolute;top:0;left:0;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(135deg,#1a1d29 0%,#0f1117 100%);color:#fff;text-align:center;padding:20px;">
-                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#818cf8" stroke-width="2" style="margin-bottom:20px;">
-                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-                    <polyline points="15 3 21 3 21 9"></polyline>
-                    <line x1="10" y1="14" x2="21" y2="3"></line>
-                </svg>
-                <h3 style="font-size:18px;margin:0 0 12px 0;font-weight:600;">Video đã mở trong tab mới</h3>
-                <p style="font-size:14px;opacity:0.7;margin:0 0 20px 0;">Nếu không thấy, hãy kiểm tra popup blocker của trình duyệt</p>
-                <button onclick="window.open('${embed}', '_blank')" style="padding:12px 28px;background:linear-gradient(135deg,#818cf8 0%,#c084fc 100%);border:none;border-radius:12px;color:#fff;font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:8px;">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
-                    </svg>
-                    Mở lại video
-                </button>
-            </div>
-        `;
-        elements.playerModal.classList.add('active');
-        document.body.style.overflow = 'hidden';
         return;
     }
 
