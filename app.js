@@ -499,13 +499,19 @@ async function loadMovies(append = false) {
 
         renderMovies(movies, append);
 
-        // Check if there are more pages
+        // Check if there are more pages and auto-load them
         const totalPages = pagination.total_page || pagination.totalPages || 1;
-        state.hasMore = state.currentPage < totalPages;
+        const maxPagesToLoad = 5; // Load up to 5 pages (approx 100-150 movies)
 
-        if (state.hasMore && !state.searchKeyword) {
-            elements.loadMoreBtn.classList.remove('hidden');
+        if (state.currentPage < totalPages && state.currentPage < maxPagesToLoad && !state.searchKeyword) {
+            // Auto load next page
+            state.currentPage++;
+            state.isLoading = false;
+            await loadMovies(true);
+            return;
         }
+
+        state.hasMore = false;
 
     } catch (error) {
         console.error('Error loading movies:', error);
