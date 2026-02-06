@@ -40,7 +40,12 @@ const elements = {
     genreFilter: document.getElementById('genreFilter'),
     countryFilter: document.getElementById('countryFilter'),
     yearFilter: document.getElementById('yearFilter'),
-    navBtns: document.querySelectorAll('.nav-btn')
+    navBtns: document.querySelectorAll('.nav-btn'),
+    // Hero Slider
+    heroSlides: document.getElementById('heroSlides'),
+    heroDots: document.getElementById('heroDots'),
+    heroPrev: document.getElementById('heroPrev'),
+    heroNext: document.getElementById('heroNext')
 };
 
 // HLS Player Instance
@@ -138,13 +143,24 @@ function createMovieCard(movie) {
     const posterUrl = movie.thumb_url || movie.poster_url || 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 450"%3E%3Crect fill="%231a1d29" width="300" height="450"/%3E%3Ctext fill="%234a5568" x="150" y="225" text-anchor="middle" font-size="16"%3ENo Image%3C/text%3E%3C/svg%3E';
 
     card.innerHTML = `
-        <img class="movie-poster" src="${posterUrl}" alt="${movie.name}" loading="lazy" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 300 450%22%3E%3Crect fill=%22%231a1d29%22 width=%22300%22 height=%22450%22/%3E%3Ctext fill=%22%234a5568%22 x=%22150%22 y=%22225%22 text-anchor=%22middle%22 font-size=%2216%22%3ENo Image%3C/text%3E%3C/svg%3E'">
+        <div class="poster-wrapper">
+            <img class="movie-poster" src="${posterUrl}" alt="${movie.name}" loading="lazy" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 300 450%22%3E%3Crect fill=%22%231a1d29%22 width=%22300%22 height=%22450%22/%3E%3Ctext fill=%22%234a5568%22 x=%22150%22 y=%22225%22 text-anchor=%22middle%22 font-size=%2216%22%3ENo Image%3C/text%3E%3C/svg%3E'">
+            <div class="poster-overlay">
+                <div class="play-icon">
+                    <svg viewBox="0 0 24 24" fill="currentColor">
+                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                    </svg>
+                </div>
+            </div>
+            <div class="movie-badges-overlay">
+                ${movie.quality ? `<span class="movie-badge quality">${movie.quality}</span>` : ''}
+                ${movie.current_episode ? `<span class="movie-badge episode">${movie.current_episode}</span>` : ''}
+            </div>
+        </div>
         <div class="movie-info">
             <h3 class="movie-title">${movie.name}</h3>
             <p class="movie-original-title">${movie.original_name || ''}</p>
             <div class="movie-meta">
-                ${movie.quality ? `<span class="movie-badge quality">${movie.quality}</span>` : ''}
-                ${movie.current_episode ? `<span class="movie-badge episode">${movie.current_episode}</span>` : ''}
                 ${movie.language ? `<span class="movie-badge">${movie.language}</span>` : ''}
                 ${movie.year ? `<span class="movie-badge">${movie.year}</span>` : ''}
             </div>
@@ -752,14 +768,139 @@ function performSearch() {
 }
 
 // ========================================
+// Hero Slider
+// ========================================
+
+let heroCurrentSlide = 0;
+let heroInterval = null;
+const HERO_LIMIT = 5;
+
+function renderHeroSlider(movies) {
+    if (!elements.heroSlides || movies.length === 0) return;
+
+    const heroMovies = movies.slice(0, HERO_LIMIT);
+
+    elements.heroSlides.innerHTML = heroMovies.map((movie, index) => {
+        const posterUrl = movie.thumb_url || movie.poster_url || '';
+        const description = movie.description || 'Không có mô tả';
+
+        return `
+            <div class="hero-slide" style="background-image: url('${posterUrl}')" data-slug="${movie.slug}">
+                <div class="hero-content">
+                    <h2 class="hero-title">${movie.name}</h2>
+                    <p class="hero-subtitle">${movie.original_name || ''}</p>
+                    <div class="hero-badges">
+                        ${movie.quality ? `<span class="hero-badge quality">${movie.quality}</span>` : ''}
+                        ${movie.current_episode ? `<span class="hero-badge">${movie.current_episode}</span>` : ''}
+                        ${movie.language ? `<span class="hero-badge">${movie.language}</span>` : ''}
+                        ${movie.year ? `<span class="hero-badge">${movie.year}</span>` : ''}
+                    </div>
+                    <p class="hero-description">${description.substring(0, 200)}...</p>
+                    <div class="hero-actions">
+                        <button class="hero-play-btn" onclick="showMovieDetail('${movie.slug}')">
+                            <svg viewBox="0 0 24 24" fill="currentColor">
+                                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                            </svg>
+                            Xem ngay
+                        </button>
+                        <button class="hero-info-btn" onclick="showMovieDetail('${movie.slug}')">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <line x1="12" y1="16" x2="12" y2="12"></line>
+                                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                            </svg>
+                            Chi tiết
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    // Render dots
+    elements.heroDots.innerHTML = heroMovies.map((_, index) =>
+        `<div class="hero-dot ${index === 0 ? 'active' : ''}" data-index="${index}"></div>`
+    ).join('');
+
+    // Event listeners for dots
+    elements.heroDots.querySelectorAll('.hero-dot').forEach(dot => {
+        dot.addEventListener('click', () => {
+            goToSlide(parseInt(dot.dataset.index));
+        });
+    });
+
+    // Start auto-play
+    startHeroAutoPlay();
+}
+
+function goToSlide(index) {
+    const slides = elements.heroSlides.querySelectorAll('.hero-slide');
+    if (slides.length === 0) return;
+
+    heroCurrentSlide = index;
+    if (heroCurrentSlide >= slides.length) heroCurrentSlide = 0;
+    if (heroCurrentSlide < 0) heroCurrentSlide = slides.length - 1;
+
+    elements.heroSlides.style.transform = `translateX(-${heroCurrentSlide * 100}%)`;
+
+    // Update dots
+    elements.heroDots.querySelectorAll('.hero-dot').forEach((dot, i) => {
+        dot.classList.toggle('active', i === heroCurrentSlide);
+    });
+}
+
+function nextSlide() {
+    const slides = elements.heroSlides.querySelectorAll('.hero-slide');
+    goToSlide((heroCurrentSlide + 1) % slides.length);
+}
+
+function prevSlide() {
+    const slides = elements.heroSlides.querySelectorAll('.hero-slide');
+    goToSlide((heroCurrentSlide - 1 + slides.length) % slides.length);
+}
+
+function startHeroAutoPlay() {
+    if (heroInterval) clearInterval(heroInterval);
+    heroInterval = setInterval(nextSlide, 5000);
+}
+
+function initHeroControls() {
+    if (elements.heroPrev) {
+        elements.heroPrev.addEventListener('click', () => {
+            prevSlide();
+            startHeroAutoPlay(); // Reset timer
+        });
+    }
+    if (elements.heroNext) {
+        elements.heroNext.addEventListener('click', () => {
+            nextSlide();
+            startHeroAutoPlay(); // Reset timer
+        });
+    }
+}
+
+async function loadHeroSlider() {
+    try {
+        const data = await getLatestMovies(1);
+        const movies = data.items || data.data?.items || [];
+        renderHeroSlider(movies);
+    } catch (error) {
+        console.error('Error loading hero slider:', error);
+    }
+}
+
+// ========================================
 // Initialize App
 // ========================================
 
 function init() {
     initTheme();
     initEventListeners();
+    initHeroControls();
+    loadHeroSlider();
     loadMovies();
 }
 
 // Start the app when DOM is ready
 document.addEventListener('DOMContentLoaded', init);
+
