@@ -83,6 +83,7 @@ async function fetchAPI(endpoint) {
 
     // CORS proxies for GitHub Pages
     const proxies = [
+        (url) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
         (url) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
         (url) => `https://corsproxy.org/?${encodeURIComponent(url)}`,
     ];
@@ -529,14 +530,16 @@ async function loadMovies(append = false) {
             response = await getMoviesByCountry(state.currentFilter, state.currentPage);
         } else if (state.filterType === 'year') {
             response = await getMoviesByYear(state.currentFilter, state.currentPage);
-        } else if (state.currentCategory === 'phim-moi-cap-nhat') {
+        } else if (state.currentCategory === 'latest' || state.currentCategory === 'trending' || state.currentCategory === 'phim-moi-cap-nhat') {
             response = await getLatestMovies(state.currentPage);
         } else {
             response = await getMoviesByCategory(state.currentCategory, state.currentPage);
         }
 
+        console.log('📦 API Response:', response);
         const movies = response.items || response.data?.items || [];
         const pagination = response.paginate || response.data?.params?.pagination || {};
+        console.log('🎬 Parsed movies:', movies.length, 'items');
 
         if (append) {
             state.movies = [...state.movies, ...movies];
