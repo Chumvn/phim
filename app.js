@@ -896,6 +896,112 @@ async function loadHeroSlider() {
 }
 
 // ========================================
+// Search Suggestions (Autocomplete)
+// ========================================
+
+let searchDebounceTimer = null;
+const SEARCH_DEBOUNCE_MS = 300;
+
+function initSearchSuggestions() {
+    const searchInput = elements.searchInput;
+    const suggestionsContainer = document.getElementById('searchSuggestions');
+
+    if (!searchInput || !suggestionsContainer) return;
+
+    // Input event with debounce
+    searchInput.addEventListener('input', (e) => {
+        const query = e.target.value.trim();
+
+        clearTimeout(searchDebounceTimer);
+
+        if (query.length < 2) {
+            hideSuggestions();
+            return;
+        }
+
+        searchDebounceTimer = setTimeout(() => {
+            fetchSuggestions(query);
+        }, SEARCH_DEBOUNCE_MS);
+    });
+
+    // Focus event - show cached suggestions
+    searchInput.addEventListener('focus', () => {
+        const query = searchInput.value.trim();
+        if (query.length >= 2 && suggestionsContainer.children.length > 0) {
+            suggestionsContainer.classList.remove('hidden');
+        }
+    });
+
+    // Click outside to hide
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.search-container')) {
+            hideSuggestions();
+        }
+    });
+}
+
+async function fetchSuggestions(query) {
+    const suggestionsContainer = document.getElementById('searchSuggestions');
+    if (!suggestionsContainer) return;
+
+    // Show loading
+    suggestionsContainer.innerHTML = '<div class="suggestion-loading">Đang tìm kiếm...</div>';
+    suggestionsContainer.classList.remove('hidden');
+
+    try {
+        const response = await searchMovies(query);
+        const movies = response.items || response.data?.items || [];
+
+        if (movies.length === 0) {
+            suggestionsContainer.innerHTML = '<div class="suggestion-empty">Không tìm thấy phim</div>';
+            return;
+        }
+
+        // Show max 8 suggestions
+        const suggestions = movies.slice(0, 8);
+
+        suggestionsContainer.innerHTML = suggestions.map(movie => {
+            const posterUrl = movie.thumb_url || movie.poster_url || '';
+            return `
+                <div class="suggestion-item" data-slug="${movie.slug}">
+                    <img class="suggestion-poster" src="${posterUrl}" alt="${movie.name}" 
+                         onerror="this.src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 45 65%22%3E%3Crect fill=%22%231a1a2e%22 width=%2245%22 height=%2265%22/%3E%3C/svg%3E'">
+                    <div class="suggestion-info">
+                        <div class="suggestion-title">${movie.name}</div>
+                        <div class="suggestion-meta">
+                            ${movie.year ? `<span>${movie.year}</span>` : ''}
+                            ${movie.quality ? `<span>${movie.quality}</span>` : ''}
+                            ${movie.current_episode ? `<span>${movie.current_episode}</span>` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        // Add click events
+        suggestionsContainer.querySelectorAll('.suggestion-item').forEach(item => {
+            item.addEventListener('click', () => {
+                const slug = item.dataset.slug;
+                hideSuggestions();
+                elements.searchInput.value = '';
+                showMovieDetail(slug);
+            });
+        });
+
+    } catch (error) {
+        console.error('Search suggestions error:', error);
+        suggestionsContainer.innerHTML = '<div class="suggestion-empty">Lỗi tìm kiếm</div>';
+    }
+}
+
+function hideSuggestions() {
+    const suggestionsContainer = document.getElementById('searchSuggestions');
+    if (suggestionsContainer) {
+        suggestionsContainer.classList.add('hidden');
+    }
+}
+
+// ========================================
 // Initialize App
 // ========================================
 
@@ -903,10 +1009,10 @@ function init() {
     initTheme();
     initEventListeners();
     initHeroControls();
+    initSearchSuggestions();
     loadHeroSlider();
     loadMovies();
 }
 
 // Start the app when DOM is ready
 document.addEventListener('DOMContentLoaded', init);
-
