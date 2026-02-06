@@ -1,10 +1,10 @@
 /**
  * CHUM Movies - Main Application Logic
- * Movie streaming webapp using GogoPhim API
+ * Movie streaming webapp using NguonC API
  */
 
-// API Configuration - GogoPhim
-const API_BASE = 'https://app.gogophim.com/v1';
+// API Configuration
+const API_BASE = 'https://phim.nguonc.com/api';
 
 // State Management
 const state = {
@@ -52,8 +52,31 @@ const elements = {
 let hls = null;
 
 // ========================================
-// GogoPhim API Functions
+// OPhim API Functions
 // ========================================
+
+const API_TIMEOUT = 8000; // 8 seconds timeout
+
+// Fetch with timeout
+async function fetchWithTimeout(url, options = {}, timeout = API_TIMEOUT) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+    try {
+        const response = await fetch(url, {
+            ...options,
+            signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+        return response;
+    } catch (error) {
+        clearTimeout(timeoutId);
+        if (error.name === 'AbortError') {
+            throw new Error('Request timed out');
+        }
+        throw error;
+    }
+}
 
 async function fetchAPI(endpoint) {
     const apiUrl = `${API_BASE}${endpoint}`;
@@ -62,186 +85,109 @@ async function fetchAPI(endpoint) {
     const proxies = [
         (url) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
         (url) => `https://corsproxy.org/?${encodeURIComponent(url)}`,
-        (url) => `https://thingproxy.freeboard.io/fetch/${url}`,
     ];
 
-    // Try direct fetch first (works if CORS is enabled on API)
+    // Try direct fetch first
     try {
-        const response = await fetch(apiUrl, {
+        const response = await fetchWithTimeout(apiUrl, {
             headers: { 'Accept': 'application/json' }
         });
         if (response.ok) {
             const data = await response.json();
-            if (data && (Array.isArray(data) || data.title || data.items)) {
-                console.log('✓ Direct API call thành công');
+            if (data && (data.items || data.movie || data.status)) {
+                console.log('✓ Direct API hoạt động');
                 return data;
             }
         }
     } catch (e) {
-        console.log('Direct call failed, trying proxies...');
+        console.log('Direct call failed:', e.message);
     }
 
     // Fallback to proxies
-    let lastError = null;
     for (const getProxyUrl of proxies) {
         const proxyUrl = getProxyUrl(apiUrl);
         try {
-            const response = await fetch(proxyUrl, {
+            const response = await fetchWithTimeout(proxyUrl, {
                 headers: { 'Accept': 'application/json' }
             });
 
             if (response.ok) {
                 const text = await response.text();
-                try {
-                    const data = JSON.parse(text);
-                    if (data && (Array.isArray(data) || data.title || data.items)) {
-                        console.log('✓ Proxy hoạt động:', proxyUrl.split('?')[0]);
-                        return data;
-                    }
-                } catch {
-                    continue;
+                const data = JSON.parse(text);
+                if (data && (data.items || data.movie || data.status)) {
+                    console.log('✓ Proxy hoạt động');
+                    return data;
                 }
             }
         } catch (e) {
-            lastError = e;
+            console.log('Proxy failed:', e.message);
             continue;
         }
     }
 
-    console.error('Tất cả proxy đều thất bại:', lastError);
-    throw new Error('Failed to fetch from API');
+    throw new Error('Không thể kết nối API');
 }
 
-// Get posts (movies list)
+// NguonC API endpoints
 async function getLatestMovies(page = 1) {
-    const data = await fetchAPI(`/posts?filter=latest&page=${page}&limit=24`);
-    return transformGogoResponse(data);
+    return fetchAPI(`/films/phim-moi-cap-nhat?page=${page}`);
 }
 
 async function getMoviesByCategory(category, page = 1) {
-    // Map category to GogoPhim filter
-    const filterMap = {
+    // Map category for NguonC API
+    const categoryMap = {
+        'latest': 'phim-moi-cap-nhat',
+        'trending': 'phim-moi-cap-nhat',
         'phim-le': 'phim-le',
         'phim-bo': 'phim-bo',
         'hoat-hinh': 'hoat-hinh',
-        'phim-moi-cap-nhat': 'latest'
+        'tv-shows': 'tv-shows'
     };
-    const filter = filterMap[category] || category;
-    const data = await fetchAPI(`/posts?filter=${filter}&page=${page}&limit=24`);
-    return transformGogoResponse(data);
+    const cat = categoryMap[category] || category;
+    return fetchAPI(`/films/danh-sach/${cat}?page=${page}`);
 }
 
 async function getMoviesByGenre(genre, page = 1) {
-    const data = await fetchAPI(`/posts?genre=${genre}&page=${page}&limit=24`);
-    return transformGogoResponse(data);
+    return fetchAPI(`/films/the-loai/${genre}?page=${page}`);
 }
 
 async function getMoviesByCountry(country, page = 1) {
-    // GogoPhim might not have country filter, use genre as fallback
-    const data = await fetchAPI(`/posts?filter=latest&page=${page}&limit=24`);
-    return transformGogoResponse(data);
+    return fetchAPI(`/films/quoc-gia/${country}?page=${page}`);
 }
 
 async function getMoviesByYear(year, page = 1) {
-    // GogoPhim might not have year filter
-    const data = await fetchAPI(`/posts?filter=latest&page=${page}&limit=24`);
-    return transformGogoResponse(data);
+    return fetchAPI(`/films/nam-phat-hanh/${year}?page=${page}`);
 }
 
 async function searchMovies(keyword) {
-    const data = await fetchAPI(`/search?query=${encodeURIComponent(keyword)}&page=1&limit=20`);
-    return transformGogoResponse(data);
+    return fetchAPI(`/films/search?keyword=${encodeURIComponent(keyword)}`);
 }
 
 async function getMovieDetail(slug) {
-    // Get metadata from GogoPhim
-    const data = await fetchAPI(`/meta?type=movie&slug=${slug}`);
-    return transformGogoMeta(data, slug);
-}
-
-// Transform GogoPhim response to match our format
-function transformGogoResponse(data) {
-    // GogoPhim returns array of posts: [{title, link, image, provider}]
-    const posts = Array.isArray(data) ? data : (data.items || data.data || []);
-
-    const items = posts.map(post => {
-        // Extract slug from link
-        const slug = extractSlugFromLink(post.link);
-        return {
-            name: post.title,
-            original_name: '',
-            slug: slug,
-            thumb_url: post.image,
-            poster_url: post.image,
-            quality: 'HD',
-            language: 'Vietsub',
-            year: '',
-            current_episode: '',
-            description: '',
-            _link: post.link // Keep original link for streaming
-        };
-    });
-
-    return { items };
-}
-
-function extractSlugFromLink(link) {
-    if (!link) return '';
-    // Extract slug from URLs like /m/slug or /s/slug or /phim/slug
-    const match = link.match(/\/(?:m|s|phim)\/([^\/\?]+)/);
-    return match ? match[1] : link.split('/').pop() || '';
-}
-
-function transformGogoMeta(data, slug) {
-    // GogoPhim meta format: {title, image, synopsis, imdbId, type, tags, cast, rating, linkList}
-    if (!data) return null;
-
-    return {
-        movie: {
-            name: data.title || '',
-            original_name: '',
-            slug: slug,
-            thumb_url: data.image,
-            poster_url: data.image,
-            description: data.synopsis || '',
-            quality: 'HD',
-            language: 'Vietsub',
-            year: '',
-            type: data.type || 'movie',
-            imdb_rating: data.rating || '',
-            tags: data.tags || [],
-            cast: data.cast || [],
-            // Episodes/servers from linkList
-            episodes: transformLinkList(data.linkList || [])
-        }
-    };
-}
-
-function transformLinkList(linkList) {
-    // Transform GogoPhim linkList to episodes format
-    if (!linkList || linkList.length === 0) return [];
-
-    return linkList.map((server, idx) => ({
-        server_name: server.title || `Server ${idx + 1}`,
-        server_data: (server.directLinks || []).map((link, i) => ({
-            name: link.title || `Tập ${i + 1}`,
-            slug: `tap-${i + 1}`,
-            link_embed: link.link,
-            link_m3u8: link.link
-        }))
-    }));
+    return fetchAPI(`/film/${slug}`);
 }
 
 // ========================================
 // UI Rendering Functions
 // ========================================
 
+// NguonC CDN for images
+const IMAGE_CDN = '';
+
+function getImageUrl(imagePath) {
+    if (!imagePath) return null;
+    // If already full URL, return as is
+    if (imagePath.startsWith('http')) return imagePath;
+    // NguonC returns full URLs, so just return the path
+    return imagePath;
+}
+
 function createMovieCard(movie) {
     const card = document.createElement('div');
     card.className = 'movie-card';
     card.dataset.slug = movie.slug;
 
-    const posterUrl = movie.thumb_url || movie.poster_url || 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 450"%3E%3Crect fill="%231a1d29" width="300" height="450"/%3E%3Ctext fill="%234a5568" x="150" y="225" text-anchor="middle" font-size="16"%3ENo Image%3C/text%3E%3C/svg%3E';
+    const posterUrl = getImageUrl(movie.thumb_url) || getImageUrl(movie.poster_url) || 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 450"%3E%3Crect fill="%231a1d29" width="300" height="450"/%3E%3Ctext fill="%234a5568" x="150" y="225" text-anchor="middle" font-size="16"%3ENo Image%3C/text%3E%3C/svg%3E';
 
     card.innerHTML = `
         <div class="poster-wrapper">
@@ -299,7 +245,7 @@ function renderMovies(movies, append = false) {
 }
 
 function renderMovieDetail(movie) {
-    const posterUrl = movie.thumb_url || movie.poster_url || '';
+    const posterUrl = getImageUrl(movie.poster_url) || getImageUrl(movie.thumb_url) || '';
 
     // Handle category - can be array or object with keys "1", "2", etc.
     let categoryTags = [];
@@ -888,8 +834,8 @@ function renderHeroSlider(movies) {
     const heroMovies = movies.slice(0, HERO_LIMIT);
 
     elements.heroSlides.innerHTML = heroMovies.map((movie, index) => {
-        const posterUrl = movie.thumb_url || movie.poster_url || '';
-        const description = movie.description || 'Không có mô tả';
+        const posterUrl = getImageUrl(movie.poster_url) || getImageUrl(movie.thumb_url) || '';
+        const description = movie.origin_name || 'Không có mô tả';
 
         return `
             <div class="hero-slide" style="background-image: url('${posterUrl}')" data-slug="${movie.slug}">
@@ -1062,7 +1008,7 @@ async function fetchSuggestions(query) {
         const suggestions = movies.slice(0, 8);
 
         suggestionsContainer.innerHTML = suggestions.map(movie => {
-            const posterUrl = movie.thumb_url || movie.poster_url || '';
+            const posterUrl = getImageUrl(movie.thumb_url) || getImageUrl(movie.poster_url) || '';
             return `
                 <div class="suggestion-item" data-slug="${movie.slug}">
                     <img class="suggestion-poster" src="${posterUrl}" alt="${movie.name}" 
