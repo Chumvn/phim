@@ -304,6 +304,19 @@ function renderMovieDetail(movie) {
                     ${movie.time ? `<span class="movie-badge">${movie.time}</span>` : ''}
                 </div>
                 <p class="detail-description">${movie.description || 'Chưa có mô tả'}</p>
+                <div class="detail-actions">
+                    <button class="share-qr-btn" onclick="shareMovieQR('${movie.slug}', '${movie.name.replace(/'/g, "\\'")}')">                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="3" y="3" width="7" height="7"></rect>
+                            <rect x="14" y="3" width="7" height="7"></rect>
+                            <rect x="3" y="14" width="7" height="7"></rect>
+                            <rect x="14" y="14" width="3" height="3"></rect>
+                            <rect x="18" y="14" width="3" height="3"></rect>
+                            <rect x="14" y="18" width="3" height="3"></rect>
+                            <rect x="18" y="18" width="3" height="3"></rect>
+                        </svg>
+                        Chia sẻ QR
+                    </button>
+                </div>
             </div>
         </div>
         ${categoryTags.length > 0 ? `
@@ -601,7 +614,13 @@ async function showMovieDetail(slug) {
         renderMovieDetail(movie);
         elements.movieDetail.classList.remove('hidden');
 
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+        // Scroll to movie detail section instead of top
+        setTimeout(() => {
+            const detailElement = elements.movieDetail;
+            if (detailElement) {
+                detailElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }, 100);
     } catch (error) {
         console.error('Error loading movie detail:', error);
         elements.movieDetail.innerHTML = `
@@ -1052,6 +1071,107 @@ function hideSuggestions() {
 }
 
 // ========================================
+// QR Share Functions
+// ========================================
+
+function shareMovieQR(slug, movieName) {
+    const baseUrl = window.location.origin + window.location.pathname;
+    const shareUrl = `${baseUrl}#movie/${slug}`;
+
+    // Get modal elements
+    const qrModal = document.getElementById('qrShareModal');
+    const qrCodeContainer = document.getElementById('qrCode');
+    const qrMovieName = document.getElementById('qrMovieName');
+    const shareLink = document.getElementById('shareLink');
+
+    if (!qrModal || !qrCodeContainer) return;
+
+    // Set movie name and link
+    qrMovieName.textContent = movieName;
+    shareLink.value = shareUrl;
+
+    // Generate QR code
+    qrCodeContainer.innerHTML = '';
+    try {
+        const qr = qrcode(0, 'M');
+        qr.addData(shareUrl);
+        qr.make();
+        qrCodeContainer.innerHTML = qr.createSvgTag({
+            cellSize: 4,
+            margin: 2,
+            scalable: true
+        });
+    } catch (e) {
+        console.error('QR generation error:', e);
+        qrCodeContainer.innerHTML = '<p style="color:#f87171;">Không thể tạo mã QR</p>';
+    }
+
+    // Show modal
+    qrModal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeQrModal() {
+    const qrModal = document.getElementById('qrShareModal');
+    if (qrModal) {
+        qrModal.classList.add('hidden');
+        document.body.style.overflow = '';
+    }
+}
+
+function copyShareLink() {
+    const shareLink = document.getElementById('shareLink');
+    const copyBtn = document.getElementById('copyLinkBtn');
+
+    if (shareLink) {
+        shareLink.select();
+        navigator.clipboard.writeText(shareLink.value).then(() => {
+            const originalText = copyBtn.textContent;
+            copyBtn.textContent = '✓ Đã copy';
+            copyBtn.style.background = '#22c55e';
+            setTimeout(() => {
+                copyBtn.textContent = originalText;
+                copyBtn.style.background = '';
+            }, 2000);
+        }).catch(() => {
+            // Fallback
+            document.execCommand('copy');
+        });
+    }
+}
+
+function initQrModal() {
+    const closeBtn = document.getElementById('closeQrModal');
+    const copyBtn = document.getElementById('copyLinkBtn');
+    const qrModal = document.getElementById('qrShareModal');
+
+    if (closeBtn) {
+        closeBtn.addEventListener('click', closeQrModal);
+    }
+    if (copyBtn) {
+        copyBtn.addEventListener('click', copyShareLink);
+    }
+    if (qrModal) {
+        qrModal.addEventListener('click', (e) => {
+            if (e.target === qrModal) {
+                closeQrModal();
+            }
+        });
+    }
+}
+
+// Handle URL hash for shared movie links
+function handleMovieHash() {
+    const hash = window.location.hash;
+    if (hash.startsWith('#movie/')) {
+        const slug = hash.replace('#movie/', '');
+        if (slug) {
+            setTimeout(() => showMovieDetail(slug), 500);
+        }
+    }
+}
+
+// ========================================
 // Initialize App
 // ========================================
 
@@ -1060,8 +1180,10 @@ function init() {
     initEventListeners();
     initHeroControls();
     initSearchSuggestions();
+    initQrModal();
     loadHeroSlider();
     loadMovies();
+    handleMovieHash();
 }
 
 // Start the app when DOM is ready

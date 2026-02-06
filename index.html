@@ -244,6 +244,30 @@
         <p>Designed & built by <strong>CHUM</strong></p>
     </footer>
 
+    <!-- QR Share Modal -->
+    <div id="qrShareModal" class="qr-modal hidden">
+        <div class="qr-modal-content">
+            <div class="qr-modal-header">
+                <h3>📲 Chia sẻ phim</h3>
+                <button id="closeQrModal" class="close-qr-btn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <div class="qr-modal-body">
+                <div id="qrCode" class="qr-code"></div>
+                <p id="qrMovieName" class="qr-movie-name"></p>
+                <div class="qr-link-box">
+                    <input type="text" id="shareLink" readonly>
+                    <button id="copyLinkBtn" class="copy-link-btn">📋 Copy</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
     <script src="app.js"></script>
 </body>
 

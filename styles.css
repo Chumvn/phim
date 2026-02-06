@@ -1359,3 +1359,208 @@ body {
     font-size: 0.9rem;
     color: var(--text-muted);
 }
+
+/* ========================================
+   QR Share Modal
+   ======================================== */
+.qr-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(10px);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.qr-modal.hidden {
+    display: none;
+}
+
+.qr-modal-content {
+    background: var(--bg-card);
+    border-radius: var(--border-radius);
+    border: 1px solid rgba(139, 92, 246, 0.2);
+    max-width: 400px;
+    width: 100%;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    animation: modalSlideIn 0.3s ease;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: scale(0.9) translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.qr-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px;
+    border-bottom: 1px solid rgba(139, 92, 246, 0.1);
+}
+
+.qr-modal-header h3 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.close-qr-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition);
+    color: var(--text-secondary);
+}
+
+.close-qr-btn svg {
+    width: 18px;
+    height: 18px;
+}
+
+.close-qr-btn:hover {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+}
+
+.qr-modal-body {
+    padding: 30px;
+    text-align: center;
+}
+
+.qr-code {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    display: inline-block;
+    margin-bottom: 20px;
+}
+
+.qr-code svg {
+    width: 180px;
+    height: 180px;
+}
+
+.qr-movie-name {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 20px;
+    line-height: 1.4;
+}
+
+.qr-link-box {
+    display: flex;
+    gap: 8px;
+    background: var(--bg-secondary);
+    border-radius: 12px;
+    padding: 8px;
+}
+
+.qr-link-box input {
+    flex: 1;
+    padding: 10px 12px;
+    background: transparent;
+    border: none;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    font-family: inherit;
+    outline: none;
+    min-width: 0;
+}
+
+.copy-link-btn {
+    padding: 10px 16px;
+    background: var(--accent-gradient);
+    border: none;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: white;
+    cursor: pointer;
+    transition: var(--transition);
+    white-space: nowrap;
+}
+
+.copy-link-btn:hover {
+    transform: scale(1.02);
+    filter: brightness(1.1);
+}
+
+/* Share QR Button in Detail Page */
+.detail-actions {
+    margin-top: 20px;
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.share-qr-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 24px;
+    background: var(--bg-secondary);
+    border: 1px solid rgba(139, 92, 246, 0.3);
+    border-radius: 50px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: var(--transition);
+    font-family: inherit;
+}
+
+.share-qr-btn svg {
+    width: 20px;
+    height: 20px;
+    color: var(--accent);
+}
+
+.share-qr-btn:hover {
+    background: var(--accent-gradient);
+    border-color: transparent;
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(139, 92, 246, 0.4);
+}
+
+.share-qr-btn:hover svg {
+    color: white;
+}
+
+/* Mobile responsive for QR modal */
+@media (max-width: 480px) {
+    .qr-modal-content {
+        margin: 10px;
+    }
+
+    .qr-code svg {
+        width: 150px;
+        height: 150px;
+    }
+
+    .qr-link-box {
+        flex-direction: column;
+    }
+
+    .copy-link-btn {
+        width: 100%;
+    }
+}
